@@ -167,9 +167,6 @@ footer b{color:var(--amber-soft);font-weight:500}
       <div class="panel">
         <div class="ptitle">目标移动 TARGET</div>
         <div class="opts" id="moveOpts"></div>
-        <div class="att" style="margin-top:12px">
-          视角模式：<span id="modeWrap" style="display:inline-flex;gap:6px;margin-left:6px"></span>
-        </div>
         <div class="att">
           <b>配件说明：</b>枪口、握把、枪托、弹匣等配件只影响后坐力、开镜晃动与换弹速度，<b>不改变初速和子弹下坠</b>，因此下坠结果不随配件变化；倍镜仅决定瞄准读数方式。
         </div>
@@ -258,7 +255,7 @@ var RET_META = {
   '6x': {w:828, h:834, r0:382},
   '8x': {w:1085, h:1080, r0:496},
 };
-var state = {w:'AWM', s:'8x', move:'stop', mode:'hold', R:300, r4:'chevron', dotR:3, dotColor:'#ff3b2e', cxOff:0, cyOff:0, cat:'all'};
+var state = {w:'AWM', s:'8x', move:'stop', R:300, r4:'chevron', dotR:3, dotColor:'#ff3b2e', cxOff:0, cyOff:0, cat:'all'};
 
 /* ===== PCHIP 单调三次插值 ===== */
 function pchip(xs, ys){
@@ -325,13 +322,8 @@ function compute(){
   var drop=dropAt(R), dropHold=drop-dropAt(100), mil=milAt(R), t=Math.sqrt(2*drop/100/G);
   var mv=MOVES.filter(function(x){return x.id===state.move;})[0];
   var leadM=mv.vt*t, leadMil=R>0?leadM/R*1000:0, bodies=leadM/0.5;
-  var zero=null;
-  if(sc.adj && state.mode==='zero'){
-    var z=Math.max(100, Math.min(sc.zmax, Math.round(R/100)*100));
-    zero={z:z, page:(z-100)/100, res:mil-milAt(z)};
-  }
-  var vMil = zero ? zero.res : mil;   /* 分划图上的垂直读数 */
-  return {R:R, drop:drop, dropHold:dropHold, mil:mil, t:t, leadM:leadM, leadMil:leadMil, bodies:bodies, zero:zero, vMil:vMil, moving:mv.vt>0};
+  var vMil = mil;   /* 分划图上的垂直读数：直接抬枪（100m 归零） */
+  return {R:R, drop:drop, dropHold:dropHold, mil:mil, t:t, leadM:leadM, leadMil:leadMil, bodies:bodies, vMil:vMil, moving:mv.vt>0};
 }
 /* ===== 通用：指定武器的下坠（图表用，不依赖当前 state） ===== */
 function dropAtW(w,R){
@@ -363,29 +355,17 @@ function renderControls(){
   c=document.getElementById('scopeOpts'); c.innerHTML='';
   SCOPES.forEach(function(s){
     var ok=weapon().scopes.indexOf(s.id)>=0;
-    var o=el('div','opt'+(s.id===state.s?' on':'')+(ok?'':' dis'), s.name+(s.adj?'<span class="sub">可调归零</span>':''));
+    var o=el('div','opt'+(s.id===state.s?' on':'')+(ok?'':' dis'), s.name);
     if(ok) o.onclick=function(){state.s=s.id; render();};
     c.appendChild(o);
   });
-  document.getElementById('scopeNote').textContent = scope().adj ? '高倍镜可调归零' : '固定 100m，只能抬枪';
+  document.getElementById('scopeNote').textContent = '固定 100m 归零，直接抬枪';
   c=document.getElementById('moveOpts'); c.innerHTML='';
   MOVES.forEach(function(m){
     var o=el('div','opt'+(m.id===state.move?' on':''), m.name);
     o.onclick=function(){state.move=m.id; render();};
     c.appendChild(o);
   });
-  /* 视角模式 */
-  var mw=document.getElementById('modeWrap'); mw.innerHTML='';
-  if(scope().adj){
-    [['hold','直接抬枪'],['zero','归零后']].forEach(function(p){
-      var o=el('span','opt'+(state.mode===p[0]?' on':''), p[1]);
-      o.style.padding='3px 10px'; o.style.fontSize='12.5px';
-      o.onclick=function(){state.mode=p[0]; render();};
-      mw.appendChild(o);
-    });
-  }else{
-    mw.textContent='该倍镜固定 100m，只能抬枪';
-  }
   document.getElementById('scopeTitle').textContent = scope().name + ' · ' + weapon().name;
 }
 
@@ -582,14 +562,7 @@ function describePos(mil){
 }
 function renderVerdict(d){
   var h='';
-  if(d.zero){
-    h+='归零方案：';
-    if(d.zero.page>0) h+='按 <span class="big">PageUp '+d.zero.page+' 次</span>，把归零距离调到 <span class="big">'+d.zero.z+' m</span>，';
-    else h+='归零距离保持默认 <span class="big">'+d.zero.z+' m</span>，';
-    h+='用<b>镜内中心点</b>瞄准';
-    if(Math.abs(d.zero.res)>=0.3) h+='，再<span class="red">上下微调 '+d.zero.res.toFixed(1)+' mil</span>';
-    h+='。';
-  }else if(d.mil<=0.05){
+  if(d.mil<=0.05){
     h+='保持 100m 归零，直接用<span class="big">镜内中心点</span>瞄准。';
   }else{
     h+='保持 100m 归零，用中心<span class="red">下方 '+d.mil.toFixed(1)+' mil</span> 的位置瞄准（'+describePos(d.mil)+'）。';

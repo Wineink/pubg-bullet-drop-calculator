@@ -14,7 +14,7 @@ A fully offline manual ballistics calculator for PUBG (Steam) bullet drop. Open 
 - **Customizable red dot**: size (1.5–8 px radius) and color (8 choices)
 - **Reticle center adjustment**: ±30 fine-tune on X / Y to align the dot with the reticle center
 - Range shortcut buttons 100–800 m (every 50 m); mouse wheel on the input field adjusts ±5 m per notch, or paste a distance measured by third-party tools
-- Two aiming modes: "holdover" (直接抬枪) and "zeroing" (归零后)
+- Fixed 100 m zeroing, default "holdover" (直接抬枪) mode only (zeroing mode removed)
 - Lateral lead for stationary / walking / running targets (in mil & body lengths)
 - Real-time bullet drop, time-of-flight, holdover mils, plus a drop curve chart
 
