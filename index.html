@@ -77,7 +77,7 @@ header h1{font-family:'Rajdhani','Noto Sans SC',sans-serif;font-weight:700;font-
 header h1 b{color:var(--amber)}
 header .meta{font-family:'Rajdhani';color:var(--mut);font-size:13px;letter-spacing:1px}
 /* ===== 主网格 ===== */
-.main{display:grid;grid-template-columns:392px 1fr;gap:20px;align-items:start}
+.main{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
 .panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:10px;padding:18px}
 .panel + .panel{margin-top:16px}
 .ptitle{font-family:'Rajdhani';font-weight:600;font-size:13px;letter-spacing:2px;color:var(--amber-soft);margin-bottom:12px;display:flex;align-items:center;gap:8px}
@@ -89,6 +89,7 @@ header .meta{font-family:'Rajdhani';color:var(--mut);font-size:13px;letter-spaci
 .opt:hover{border-color:var(--amber);color:var(--amber-soft)}
 .opt.on{background:rgba(232,163,61,.16);border-color:var(--amber);color:var(--amber-soft);box-shadow:inset 0 0 0 1px rgba(232,163,61,.25)}
 .opt.dis{opacity:.28;pointer-events:none}
+.opt.dim{opacity:.3}
 .opt .sub{font-family:'Noto Sans SC';font-weight:400;font-size:11px;color:var(--mut);margin-left:5px}
 .opt.on .sub{color:var(--amber-soft)}
 /* 距离 */
@@ -105,7 +106,7 @@ input[type=range]{width:100%;accent-color:var(--amber);height:26px;cursor:pointe
 .att b{color:var(--teal);font-weight:500}
 /* ===== 瞄准镜 ===== */
 .scope-panel{display:flex;flex-direction:column;align-items:center}
-#reticle{width:min(100%,560px);aspect-ratio:1;display:block}
+#reticle{width:min(100%,1120px);aspect-ratio:1;display:block;background:transparent}
 .verdict{width:100%;margin-top:14px;font-size:14px;line-height:1.8;background:rgba(0,0,0,.25);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:12px 14px}
 .verdict .big{font-family:'Rajdhani';font-weight:700;color:var(--amber-soft);font-size:17px}
 .verdict .red{color:var(--red);font-weight:700}
@@ -144,6 +145,7 @@ footer b{color:var(--amber-soft);font-weight:500}
     <div>
       <div class="panel">
         <div class="ptitle">武器 WEAPON</div>
+        <div class="opts" id="catOpts" style="margin-bottom:10px"></div>
         <div class="opts" id="weaponOpts"></div>
       </div>
 
@@ -155,10 +157,10 @@ footer b{color:var(--amber-soft);font-weight:500}
       <div class="panel">
         <div class="ptitle">目标距离 RANGE</div>
         <div class="dist-row">
-          <div class="dist-in"><input id="distInput" type="number" min="50" max="700" value="300"><span>m</span></div>
+          <div class="dist-in"><input id="distInput" type="number" min="50" max="800" value="300"><span>m</span></div>
         </div>
         <div class="opts" id="distOpts" style="margin-bottom:12px"></div>
-        <input id="distRange" type="range" min="50" max="700" step="1" value="300">
+        <input id="distRange" type="range" min="50" max="800" step="1" value="300">
         <div class="paste-hint">把 <b>雷神迫击炮工具测得的距离</b> 复制后粘贴（Ctrl+V）到上方输入框即可，程序不自动抓取任何软件。</div>
       </div>
 
@@ -181,6 +183,12 @@ footer b{color:var(--amber-soft);font-weight:500}
       <div id="r4wrap" style="width:100%;display:none;margin-top:12px">
         <div style="font-size:12px;color:var(--mut);margin-bottom:7px">4x 分划样式（游戏内按 PageUp / PageDown 切换）</div>
         <div class="opts" id="r4Opts"></div>
+      </div>
+      <div id="dotWrap" style="width:100%;display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:12px;align-items:center">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut)">红点大小<input id="dotR" type="range" min="1.5" max="8" step="0.5" style="width:110px;height:20px"></label>
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut)">红点颜色<span id="dotPal" style="display:inline-flex;gap:5px"></span></span>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut)">中心校正 X<input id="cxOff" type="range" min="-30" max="30" step="1" style="width:110px;height:20px"></label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut)">Y<input id="cyOff" type="range" min="-30" max="30" step="1" style="width:110px;height:20px"></label>
       </div>
       <div class="verdict" id="verdict"></div>
     </div>
@@ -250,7 +258,7 @@ var RET_META = {
   '6x': {w:828, h:834, r0:382},
   '8x': {w:1085, h:1080, r0:496},
 };
-var state = {w:'AWM', s:'8x', move:'stop', mode:'hold', R:300, r4:'chevron'};
+var state = {w:'AWM', s:'8x', move:'stop', mode:'hold', R:300, r4:'chevron', dotR:3, dotColor:'#ff3b2e', cxOff:0, cyOff:0, cat:'all'};
 
 /* ===== PCHIP 单调三次插值 ===== */
 function pchip(xs, ys){
@@ -339,10 +347,17 @@ function ensureScope(){ if(weapon().scopes.indexOf(state.s)<0) state.s='4x'; }
 /* ===== 选项渲染 ===== */
 function renderControls(){
   var c;
+  c=document.getElementById('catOpts'); c.innerHTML='';
+  [['all','全部'],['SR','单发 · 栓狙'],['DMR','连发 · 连狙']].forEach(function(t){
+    var o=el('div','opt'+(state.cat===t[0]?' on':''),t[1]);
+    o.onclick=function(){state.cat=t[0]; render();};
+    c.appendChild(o);
+  });
   c=document.getElementById('weaponOpts'); c.innerHTML='';
   WEAPONS.forEach(function(w){
-    var o=el('div','opt'+(w.id===state.w?' on':''), w.name+'<span class="sub">'+w.v+'m/s</span>');
-    o.onclick=function(){state.w=w.id; ensureScope(); render();};
+    var dim=state.cat!=='all' && w.type!==state.cat;
+    var o=el('div','opt'+(w.id===state.w?' on':'')+(dim?' dim':''), w.name+'<span class="sub">'+w.v+'m/s</span>');
+    o.onclick=function(){ if(dim) state.cat=w.type; state.w=w.id; ensureScope(); render(); };
     c.appendChild(o);
   });
   c=document.getElementById('scopeOpts'); c.innerHTML='';
@@ -445,20 +460,13 @@ function renderReticle(d){
   var svg=document.getElementById('reticle'); svg.innerHTML='';
   var C=200, RP=155, id=scope().id;
   defsGrad(svg);
-  if(id==='4x'||id==='hyb') housingACOG(svg);
-  else if(id==='holo') housingHolo(svg);
-  else if(id==='redot') housingRed(svg);
-  else housingTube(svg);
-  /* 圆形视野 + 金属内圈 */
-  sCircle(svg,C,C,RP,'url(#gView)');
-  sCircle(svg,C,C,RP,'none','#333833',11);
-  sCircle(svg,C,C,RP-6,'none','rgba(255,255,255,.07)',1.5);
+  /* 只保留真实分划 + 红点（无镜框、无填充背景） */
   drawPattern(svg,d);
   drawAimMark(svg,d);
 }
 /* ===== 分划角刻度映射：视野半径对应的 mil 半径 ===== */
 function visMilOf(id){
-  return {redot:15,holo:15,'2x':16,'3x':12,'4x':10,hyb:5.2,'6x':7,'8x':5.2,'15x':3}[id];
+  return {redot:15,holo:15,'2x':16,'3x':12,'4x':10,hyb:27.5,'6x':7,'8x':27.5,'15x':3}[id];
 }
 /* 半圆弧：top=true 上拱，false 下凹(U形) */
 function arc(svg,cx,cy,r,top,col,sw){
@@ -491,7 +499,7 @@ function drawPattern(svg,d){
     var w=meta.w*scale, h=meta.h*scale;
     var im=S('image');
     im.setAttribute('href',RET_IMGS[rk]);
-    im.setAttribute('x',C-w/2); im.setAttribute('y',C-h/2);
+    im.setAttribute('x',C-w/2+state.cxOff); im.setAttribute('y',C-h/2+state.cyOff);
     im.setAttribute('width',w); im.setAttribute('height',h);
     svg.appendChild(im); return;
   }
@@ -552,13 +560,18 @@ function drawPattern(svg,d){
   }
 }
 /* ===== 瞄准标记（计算结果叠加在分划上） ===== */
+function hexA(hex,a){
+  var n=parseInt(hex.slice(1),16);
+  return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')';
+}
 function drawAimMark(svg,d){
-  var C=200,RP=155,id=scope().id,RD='#ff3b2e',ppm=RP/visMilOf(id);
-  var mx=C+d.leadMil*ppm, my=C+d.vMil*ppm;
+  var C=200,RP=155,id=scope().id,ppm=RP/visMilOf(id);
+  var mx=C+d.leadMil*ppm+state.cxOff, my=C+d.vMil*ppm+state.cyOff;
   var dist=Math.hypot(mx-C,my-C);
   if(dist>RP-8){var k=(RP-8)/dist; mx=C+(mx-C)*k; my=C+(my-C)*k;}
-  sCircle(svg,mx,my,6,'rgba(255,59,46,.25)');
-  sCircle(svg,mx,my,3.5,RD);
+  var r=state.dotR, col=state.dotColor;
+  sCircle(svg,mx,my,r*1.9,hexA(col,.28));
+  sCircle(svg,mx,my,r,col);
 }
 
 /* ===== 结论文字 ===== */
@@ -596,7 +609,7 @@ function renderCards(d){
 var chart=null;
 function renderChart(d){
   if(!chart) chart=echarts.init(document.getElementById('chart'));
-  var xs=[]; for(var r=50;r<=700;r+=25) xs.push(r);
+  var xs=[]; for(var r=50;r<=800;r+=25) xs.push(r);
   var series=[];
   WEAPONS.forEach(function(w){
     var hl=w.id===state.w, solid=[], dash=[];
@@ -611,7 +624,7 @@ function renderChart(d){
     grid:{left:56,right:24,top:26,bottom:42},
     tooltip:{trigger:'axis',confine:true,backgroundColor:'#141815',borderColor:'rgba(232,163,61,.4)',textStyle:{color:'#d9d6cc'},
       formatter:function(p){var x=p[0].data[0]; return x+' m<br>下坠 '+(dropAtW(weapon(),x)/100).toFixed(2)+' m';}},
-    xAxis:{type:'value',min:0,max:700,name:'距离 m',nameTextStyle:{color:'#8d9188'},axisLine:{lineStyle:{color:'#5c635a'}},
+    xAxis:{type:'value',min:0,max:800,name:'距离 m',nameTextStyle:{color:'#8d9188'},axisLine:{lineStyle:{color:'#5c635a'}},
       axisLabel:{color:'#8d9188',fontFamily:'Rajdhani',fontSize:12},splitLine:{lineStyle:{color:'rgba(255,255,255,.05)'}}},
     yAxis:{type:'value',min:0,name:'下坠 m',nameTextStyle:{color:'#8d9188'},axisLine:{lineStyle:{color:'#5c635a'}},
       axisLabel:{color:'#8d9188',fontFamily:'Rajdhani',fontSize:12},splitLine:{lineStyle:{color:'rgba(255,255,255,.06)'}}},
@@ -619,7 +632,7 @@ function renderChart(d){
   },true);
 }
 /* ===== 距离快捷按钮 ===== */
-var DIST_PRESETS=[100,150,200,250,300,350,400,450];
+var DIST_PRESETS=[100,150,200,250,300,350,400,450,500,550,600,650,700,750,800];
 function renderDistOpts(){
   var c=document.getElementById('distOpts'); c.innerHTML='';
   DIST_PRESETS.forEach(function(v){
@@ -642,18 +655,36 @@ function renderR4(){
 }
 /* ===== 总渲染 ===== */
 function renderOutput(){ var d=compute(); renderDistOpts(); renderR4(); renderReticle(d); renderVerdict(d); renderCards(d); renderChart(d); }
-function render(){ renderControls(); renderOutput(); }
+function render(){ renderControls(); renderDotUI(); renderOutput(); }
 
 /* ===== 事件：距离（手动输入 / 粘贴） ===== */
-function setR(v){ v=parseInt(v); if(isNaN(v))return; v=Math.max(50,Math.min(700,v)); state.R=v;
+function setR(v){ v=parseInt(v); if(isNaN(v))return; v=Math.max(50,Math.min(800,v)); state.R=v;
   document.getElementById('distRange').value=v; document.getElementById('distInput').value=v; renderOutput(); }
 document.getElementById('distInput').addEventListener('input',function(e){
-  var v=parseInt(e.target.value); if(!isNaN(v)){v=Math.max(50,Math.min(700,v)); state.R=v;
+  var v=parseInt(e.target.value); if(!isNaN(v)){v=Math.max(50,Math.min(800,v)); state.R=v;
     document.getElementById('distRange').value=v; renderOutput();}
 });
 document.getElementById('distRange').addEventListener('input',function(e){
   var v=parseInt(e.target.value); state.R=v; document.getElementById('distInput').value=v; renderOutput();
 });
+document.getElementById('distInput').addEventListener('wheel',function(e){
+  e.preventDefault(); setR(state.R+(e.deltaY<0?5:-5));
+});
+function renderDotUI(){
+  var colors=['#ff3b2e','#ff8a1e','#ffe14d','#3ddc6e','#35c9e8','#4a7dff','#f25fd0','#f2f2f2'];
+  var c=document.getElementById('dotPal'); c.innerHTML='';
+  colors.forEach(function(col){
+    var d=el('div',''); d.style.cssText='width:16px;height:16px;border-radius:50%;background:'+col+';cursor:pointer;border:2px solid '+(state.dotColor===col?'#fff':'rgba(255,255,255,.15)');
+    d.onclick=function(){state.dotColor=col; renderOutput(); renderDotUI();};
+    c.appendChild(d);
+  });
+  document.getElementById('dotR').value=state.dotR;
+  document.getElementById('cxOff').value=state.cxOff;
+  document.getElementById('cyOff').value=state.cyOff;
+}
+document.getElementById('dotR').addEventListener('input',function(e){state.dotR=parseFloat(e.target.value); renderOutput();});
+document.getElementById('cxOff').addEventListener('input',function(e){state.cxOff=parseInt(e.target.value); renderOutput();});
+document.getElementById('cyOff').addEventListener('input',function(e){state.cyOff=parseInt(e.target.value); renderOutput();});
 window.addEventListener('resize',function(){ if(chart)chart.resize(); });
 
 render();

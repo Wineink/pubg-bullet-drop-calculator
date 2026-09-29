@@ -7,9 +7,13 @@ A fully offline manual ballistics calculator for PUBG (Steam) bullet drop. Open 
 ## Features
 
 - 12 bolt-action / DMR rifles: AWM, M24, Kar98k, Mosin, Lynx, Mini14, SKS, SLR, Mk14, Mk12, Dragunov, VSS
+- Weapon category filter: All / Bolt-action SR / DMR (the other category is dimmed)
 - Optics: 4x (3 switchable reticle variants: chevron / cross / circle), Hybrid Scope (reuses the 8x high-power reticle), 6x, 8x (6x/8x with adjustable zeroing)
-- **Real in-game reticles**: the 4x variants, 6x and 8x reticles are actual reticles cut out from in-game screenshots (inline transparent PNGs), matching the game view; the red aim point is overlaid on the real reticle ticks according to the computed holdover
-- Range shortcut buttons 100–450 m, or paste a distance measured by third-party tools
+- **Real in-game reticles**: the 4x variants, 6x and 8x reticles are actual reticles cut out from in-game screenshots (inline transparent PNGs) — no housing/fill background, reticle only, enlarged display
+- **8x holdover calibration**: calibrated from live testing (AWM at 300 m lands on the first mil dot), so the red dot matches the real in-game ticks
+- **Customizable red dot**: size (1.5–8 px radius) and color (8 choices)
+- **Reticle center adjustment**: ±30 fine-tune on X / Y to align the dot with the reticle center
+- Range shortcut buttons 100–800 m (every 50 m); mouse wheel on the input field adjusts ±5 m per notch, or paste a distance measured by third-party tools
 - Two aiming modes: "holdover" (直接抬枪) and "zeroing" (归零后)
 - Lateral lead for stationary / walking / running targets (in mil & body lengths)
 - Real-time bullet drop, time-of-flight, holdover mils, plus a drop curve chart
