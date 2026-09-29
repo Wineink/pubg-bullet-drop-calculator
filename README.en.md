@@ -7,7 +7,8 @@ A fully offline manual ballistics calculator for PUBG (Steam) bullet drop. Open 
 ## Features
 
 - 12 bolt-action / DMR rifles: AWM, M24, Kar98k, Mosin, Lynx, Mini14, SKS, SLR, Mk14, Mk12, Dragunov, VSS
-- Optics: 4x (3 switchable reticle variants), Hybrid Scope, 6x, 8x (6x/8x with adjustable zeroing)
+- Optics: 4x (3 switchable reticle variants: chevron / cross / circle), Hybrid Scope (reuses the 8x high-power reticle), 6x, 8x (6x/8x with adjustable zeroing)
+- **Real in-game reticles**: the 4x variants, 6x and 8x reticles are actual reticles cut out from in-game screenshots (inline transparent PNGs), matching the game view; the red aim point is overlaid on the real reticle ticks according to the computed holdover
 - Range shortcut buttons 100–450 m, or paste a distance measured by third-party tools
 - Two aiming modes: "holdover" (直接抬枪) and "zeroing" (归零后)
 - Lateral lead for stationary / walking / running targets (in mil & body lengths)
@@ -15,7 +16,16 @@ A fully offline manual ballistics calculator for PUBG (Steam) bullet drop. Open 
 
 ## Data Basis
 
-Muzzle velocity uses official/community values; drop and mil readings come from in-match telemetry (Aug–Sep 2026 window, derived from ½gt², g=9.8), monotone cubic interpolation for 0–600 m, model extrapolation above 600 m; telemetry has sampling variance.
+Muzzle velocity uses official/community values; drop and mil readings come from in-match telemetry (Aug–Sep 2026 window, derived from ½gt², g=9.8), monotone cubic interpolation for 0–600 m, model extrapolation above 600 m; telemetry has sampling variance. Holdover is computed relative to the 100 m zero (milAt(R) = telemetry mil(R) − mil(100)).
+
+## Reticle Assets
+
+Reticles are cut out from in-game screenshots as transparent-background PNGs, keeping the real reticle plus a thin black ring:
+
+- `瞄准镜_带黑圈/` — real reticle + thin black outline circle
+- `瞄准镜_纯分划/` — reticle only (no ring)
+
+Coverage: 3x, 4x (chevron / cross / circle), 6x, 8x, 15x. The page currently enables the 4x variants, 6x and 8x (Hybrid Scope reuses the 8x high-power reticle).
 
 ## Scope of Use
 
